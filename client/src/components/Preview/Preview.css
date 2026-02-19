@@ -1,0 +1,40 @@
+.export-btn {
+    margin-top: 20px;
+    padding: 10px 15px;
+    border: none;
+    background-color: #4f46e5;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.export-btn:hover {
+    opacity: 0.9;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    width: 600px;
+    max-height: 80%;
+    overflow: auto;
+    border-radius: 10px;
+}
+
+.modal-content textarea {
+    width: 100%;
+    height: 200px;
+    margin-top: 10px;
+}
