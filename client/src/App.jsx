@@ -9,8 +9,8 @@ function App() {
 
     return (
         <div className="app">
-            <Editor cardData={cardData} setCardData={setCardData} />
             <Preview cardData={cardData} />
+            <Editor cardData={cardData} setCardData={setCardData} />
         </div>
     );
 }
