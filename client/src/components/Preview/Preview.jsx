@@ -1,6 +1,6 @@
 import { useState } from "react";
 import ProfileCard from "../ProfileCard/ProfileCard";
-import { generateCode } from "../../utils/generateCode";
+import { generateHTML } from "../../utils/generateHTML.js";
 import "./Preview.css";
 
 function Preview({ cardData }) {

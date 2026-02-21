@@ -1,14 +1,44 @@
 import { useState } from "react";
+import * as htmlToImage from "html-to-image";
 import "./Editor.css";
 import { TECH_OPTIONS } from "../../data/techOptions";
 import { ROLE_OPTIONS } from "../../data/roleOptions";
 
-function Editor({ cardData, setCardData }) {
-
+function Editor({ cardData, setCardData, cardRef }) {
     const [techSearch, setTechSearch] = useState("");
     const [roleSearch, setRoleSearch] = useState("");
 
-    // Banner Upload
+    /* =======================
+       EXPORT PNG
+    ======================== */
+
+    const handleExportPNG = async () => {
+        if (!cardRef.current) return;
+
+        try {
+            const dataUrl = await htmlToImage.toPng(cardRef.current, {
+                quality: 1,
+                pixelRatio: 2,
+                backgroundColor: "#1c1c1f",   // 👈 force solid background
+                style: {
+                    borderRadius: "22px",
+                    overflow: "hidden"
+                }
+            });
+
+            const link = document.createElement("a");
+            link.download = `${cardData.fullName || "profile"}.png`;
+            link.href = dataUrl;
+            link.click();
+        } catch (error) {
+            console.error("Export failed:", error);
+        }
+    };
+
+    /* =======================
+       IMAGE UPLOADS
+    ======================== */
+
     const handleBannerUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -19,70 +49,86 @@ function Editor({ cardData, setCardData }) {
 
         const imageUrl = URL.createObjectURL(file);
 
-        setCardData((prev) => ({
+        setCardData(prev => ({
             ...prev,
             bannerImage: imageUrl
         }));
     };
 
-    // Remove Banner
     const removeBanner = () => {
         if (cardData.bannerImage) {
             URL.revokeObjectURL(cardData.bannerImage);
         }
 
-        setCardData((prev) => ({
+        setCardData(prev => ({
             ...prev,
             bannerImage: null
         }));
     };
 
-    // Profile Upload
     const handleProfileUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Clean up previous image URL
         if (cardData.profileImage) {
             URL.revokeObjectURL(cardData.profileImage);
         }
 
         const imageUrl = URL.createObjectURL(file);
 
-        setCardData((prev) => ({
+        setCardData(prev => ({
             ...prev,
             profileImage: imageUrl
         }));
     };
 
-    // Remove Profile Picture
     const removeProfile = () => {
         if (cardData.profileImage) {
             URL.revokeObjectURL(cardData.profileImage);
         }
 
-        setCardData((prev) => ({
+        setCardData(prev => ({
             ...prev,
             profileImage: null
         }));
     };
 
-    // Full Name
+    /* =======================
+       NAME
+    ======================== */
+
     const handleNameChange = (e) => {
-        setCardData((prev) => ({
+        setCardData(prev => ({
             ...prev,
             fullName: e.target.value
         }));
     };
 
-    // Add Role (max 2)
+    /* =======================
+       BIO
+    ======================== */
+
+    const handleBioChange = (e) => {
+        const words = e.target.value.trim().split(/\s+/);
+        if (words.length <= 30) {
+            setCardData(prev => ({
+                ...prev,
+                bio: e.target.value
+            }));
+        }
+    };
+
+    /* =======================
+       ROLES
+    ======================== */
+
     const addRole = (role) => {
         if (
             cardData.roles.length >= 2 ||
             cardData.roles.includes(role)
         ) return;
 
-        setCardData((prev) => ({
+        setCardData(prev => ({
             ...prev,
             roles: [...prev.roles, role]
         }));
@@ -90,39 +136,28 @@ function Editor({ cardData, setCardData }) {
         setRoleSearch("");
     };
 
-    // Remove Role
     const removeRole = (role) => {
-        setCardData((prev) => ({
+        setCardData(prev => ({
             ...prev,
-            roles: prev.roles.filter((r) => r !== role)
+            roles: prev.roles.filter(r => r !== role)
         }));
     };
 
-    // Bio limit (30 words)
-    const handleBioChange = (e) => {
-        const words = e.target.value.trim().split(/\s+/);
-
-        if (words.length <= 30) {
-            setCardData((prev) => ({
-                ...prev,
-                bio: e.target.value
-            }));
-        }
-    };
-
-    // Filter roles based on search
-    const filteredRoles = ROLE_OPTIONS.filter((role) =>
+    const filteredRoles = ROLE_OPTIONS.filter(role =>
         role.toLowerCase().includes(roleSearch.toLowerCase())
     );
 
-    // Add Tech (max 10)
+    /* =======================
+       TECH STACK
+    ======================== */
+
     const addTech = (tech) => {
         if (
             cardData.techStack.length >= 10 ||
-            cardData.techStack.some((t) => t.name === tech.name)
+            cardData.techStack.some(t => t.name === tech.name)
         ) return;
 
-        setCardData((prev) => ({
+        setCardData(prev => ({
             ...prev,
             techStack: [...prev.techStack, tech]
         }));
@@ -130,129 +165,164 @@ function Editor({ cardData, setCardData }) {
         setTechSearch("");
     };
 
-    // Remove Tech
-    const removeTech = (techName) => {
-        setCardData((prev) => ({
+    const removeTech = (name) => {
+        setCardData(prev => ({
             ...prev,
-            techStack: prev.techStack.filter((t) => t.name !== techName)
+            techStack: prev.techStack.filter(t => t.name !== name)
         }));
     };
 
-    // Filter Tech
-    const filteredTech = TECH_OPTIONS.filter((tech) =>
+    const filteredTech = TECH_OPTIONS.filter(tech =>
         tech.name.toLowerCase().includes(techSearch.toLowerCase())
     );
 
     return (
         <div className="editor">
+            <h2 className="editor-title">Profile Builder</h2>
 
-            <h2>Profile Builder</h2>
+            {/* Upload Banner */}
+            <div className="form-group">
+                <label>Upload Banner Image</label>
 
-            {/* Banner Upload */}
-            <label>Upload Banner Image</label>
-            <input
-                type="file"
-                accept="image/*"
-                onChange={handleBannerUpload}
-            />
-            {cardData.bannerImage && (
-                <button type="button" onClick={removeBanner}>
-                    Remove Banner
-                </button>
-            )}
+                <div className="file-upload">
+                    <label className="custom-file-btn">
+                        Choose Banner
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleBannerUpload}
+                            hidden
+                        />
+                    </label>
 
-            {/* Profile Upload */}
-            <label>Upload Profile Picture</label>
-            <input
-                type="file"
-                accept="image/*"
-                onChange={handleProfileUpload}
-            />
-            {cardData.profileImage && (
-                <button type="button" onClick={removeProfile}>
-                    Remove Profile Picture
-                </button>
-            )}
-
-            {/* Full Name */}
-            <label>Full Name</label>
-            <input
-                type="text"
-                value={cardData.fullName}
-                onChange={handleNameChange}
-            />
-
-            {/* Roles */}
-            <label>Select up to 2 Roles</label>
-
-            <input
-                type="text"
-                placeholder="Search roles..."
-                value={roleSearch}
-                onChange={(e) => setRoleSearch(e.target.value)}
-            />
-
-            {/* Dropdown */}
-            <div>
-                {roleSearch &&
-                    filteredRoles.map((role) => (
-                        <div
-                            key={role}
-                            onClick={() => addRole(role)}
+                    {cardData.bannerImage && (
+                        <button
+                            className="remove-btn"
+                            onClick={removeBanner}
                         >
-                            {role}
-                        </div>
-                    ))}
+                            Remove
+                        </button>
+                    )}
+                </div>
             </div>
 
-            {/* Selected Roles */}
-            <div>
-                {cardData.roles.map((role) => (
-                    <span key={role}>
-            {role}
-                        <button onClick={() => removeRole(role)}>x</button>
-          </span>
-                ))}
+            {/* Upload Profile */}
+            <div className="form-group">
+                <label>Upload Profile Picture</label>
+
+                <div className="file-upload">
+                    <label className="custom-file-btn">
+                        Choose Profile
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleProfileUpload}
+                            hidden
+                        />
+                    </label>
+
+                    {cardData.profileImage && (
+                        <button
+                            className="remove-btn"
+                            onClick={removeProfile}
+                        >
+                            Remove
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* Name */}
+            <div className="form-group">
+                <label>Full Name</label>
+                <input
+                    type="text"
+                    value={cardData.fullName}
+                    onChange={handleNameChange}
+                />
+            </div>
+
+            {/* Roles */}
+            <div className="form-group">
+                <label>Select up to 2 Roles</label>
+                <input
+                    type="text"
+                    placeholder="Search roles..."
+                    value={roleSearch}
+                    onChange={(e) => setRoleSearch(e.target.value)}
+                />
+
+                {roleSearch && (
+                    <div className="dropdown">
+                        {filteredRoles.map(role => (
+                            <div
+                                key={role}
+                                className="dropdown-item"
+                                onClick={() => addRole(role)}
+                            >
+                                {role}
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                <div className="selected-items">
+                    {cardData.roles.map(role => (
+                        <div key={role} className="chip">
+                            {role}
+                            <button onClick={() => removeRole(role)}>✕</button>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* Bio */}
-            <label>Bio (Max 30 words)</label>
-            <textarea
-                value={cardData.bio}
-                onChange={handleBioChange}
-            />
+            <div className="form-group">
+                <label>Bio (Max 30 words)</label>
+                <textarea
+                    value={cardData.bio}
+                    onChange={handleBioChange}
+                />
+            </div>
 
-            {/* Tech Stack */}
-            <label>Select up to 10 Tech Tools</label>
+            {/* Tech */}
+            <div className="form-group">
+                <label>Select up to 10 Tech Tools</label>
+                <input
+                    type="text"
+                    placeholder="Search tech..."
+                    value={techSearch}
+                    onChange={(e) => setTechSearch(e.target.value)}
+                />
 
-            <input
-                type="text"
-                placeholder="Search tech..."
-                value={techSearch}
-                onChange={(e) => setTechSearch(e.target.value)}
-            />
+                {techSearch && (
+                    <div className="dropdown">
+                        {filteredTech.map(tech => (
+                            <div
+                                key={tech.name}
+                                className="dropdown-item"
+                                onClick={() => addTech(tech)}
+                            >
+                                {tech.name}
+                            </div>
+                        ))}
+                    </div>
+                )}
 
-            <div>
-                {techSearch &&
-                    filteredTech.map((tech) => (
-                        <div
-                            key={tech.name}
-                            onClick={() => addTech(tech)}
-                        >
+                <div className="selected-items">
+                    {cardData.techStack.map(tech => (
+                        <div key={tech.name} className="chip">
                             {tech.name}
+                            <button onClick={() => removeTech(tech.name)}>✕</button>
                         </div>
                     ))}
+                </div>
             </div>
 
-            <div>
-                {cardData.techStack.map((tech) => (
-                    <span key={tech.name}>
-      {tech.name}
-                        <button onClick={() => removeTech(tech.name)}>x</button>
-    </span>
-                ))}
-            </div>
-
+            {/* Export */}
+            <button className="export-btn" onClick={handleExportPNG}>
+                Export as PNG
+            </button>
         </div>
     );
 }
