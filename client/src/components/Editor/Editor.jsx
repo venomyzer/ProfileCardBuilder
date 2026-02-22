@@ -19,11 +19,7 @@ function Editor({ cardData, setCardData, cardRef }) {
             const dataUrl = await htmlToImage.toPng(cardRef.current, {
                 quality: 1,
                 pixelRatio: 2,
-                backgroundColor: "#1c1c1f",   // 👈 force solid background
-                style: {
-                    borderRadius: "22px",
-                    overflow: "hidden"
-                }
+                backgroundColor: "#1c1c1f"
             });
 
             const link = document.createElement("a");
